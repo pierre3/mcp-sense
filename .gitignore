@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# McpSense / .gitignore
+# ---------------------------------------------------------------------------
+
+# ビルド成果物 / 中間ファイル
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+
+# Visual Studio / Rider / VS Code のユーザー固有ファイル
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# テスト結果 / カバレッジ
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+*.coverage
+*.trx
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# セッション引継ぎメモ（ローカル専用・/handoff が生成）
+docs/SESSION-HANDOFF.md
+
+# ローカル専用の Claude Code 設定
+.claude/settings.local.json

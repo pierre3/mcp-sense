@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>McpSense.Tool</RootNamespace>
+    <AssemblyName>McpSense.Tool</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- `dotnet tool install -g McpSense.Tool` → コマンド名 `mcpsense`。 -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>mcpsense</ToolCommandName>
+    <Description>CLI for McpSense: inspect an OpenAPI spec and serve it as an MCP server (`mcpsense mcp`).</Description>
+
+    <!-- アプリケーションであり公開 API 表面ではないため XML doc は生成しない。 -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Cocona" Version="$(CoconaVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Tool だけが Core / Ai / Server を束ねる。Ai は未設定なら素通しする前提。 -->
+    <ProjectReference Include="..\McpSense.Core\McpSense.Core.csproj" />
+    <ProjectReference Include="..\McpSense.Ai\McpSense.Ai.csproj" />
+    <ProjectReference Include="..\McpSense.Server\McpSense.Server.csproj" />
+  </ItemGroup>
+</Project>

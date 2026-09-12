@@ -1,0 +1,27 @@
+{
+  "enabledPlugins": {
+    "mcp-server-dev@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(dotnet list:*)",
+      "Bash(dotnet format:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet --info)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --list-runtimes)"
+    ],
+    "deny": [
+      "Bash(dotnet nuget push:*)"
+    ]
+  }
+}

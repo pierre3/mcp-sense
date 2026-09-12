@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- MCP サーバー本体: McpServerHandlers.ListToolsHandler / CallToolHandler を自前実装し、
+       実行時に組み立てた Tool（InputSchema: JsonElement）を返す。AIFunctionFactory /
+       McpServerTool.Create の高レベル API はコンパイル時のデリゲート形状からスキーマを
+       生成する設計のため、本プロジェクトでは使えない（CLAUDE.md「重要な設計制約」）。
+       AI はオプトインなので McpSense.Ai は参照しない（McpSense.Tool が両者を束ねる）。 -->
+  <PropertyGroup>
+    <Description>MCP server for McpSense: exposes an OpenAPI-derived tool catalog over stdio / Streamable HTTP and dispatches tool calls to the upstream API.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="$(ModelContextProtocolVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\McpSense.Core\McpSense.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="McpSense.Server.Tests" />
+  </ItemGroup>
+</Project>

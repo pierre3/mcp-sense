@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- spec 解析の中核: OperationModelBuilder（spec → OperationDescriptor）と
+       ToolGroupingEngine（タグベースのグルーピング / meta-tool モード切替）。
+       AI 依存（Microsoft.Extensions.AI）はここには入れない。McpSense.Ai に隔離する。 -->
+  <PropertyGroup>
+    <Description>OpenAPI spec analysis for McpSense: builds an operation model from an OpenAPI 3.0/3.1 document and groups operations into MCP tools.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.OpenApi" Version="$(MicrosoftOpenApiVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="McpSense.Core.Tests" />
+  </ItemGroup>
+</Project>

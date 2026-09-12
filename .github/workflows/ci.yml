@@ -1,0 +1,40 @@
+# CI: main への push / PR で build + test。
+# McpSense はコード生成を行わない（spec は実行時に解析する）ため、
+# line-openapi-dotnet にあるような生成・spec 同期のステップは存在しない。
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      # NuGet の脆弱性監査が実質のゲート。NuGetAudit は restore 中に走り、直接/推移依存の
+      # 脆弱なパッケージに NU1901-NU1904 を出す。これを error に昇格させてビルドを落とす。
+      # `dotnet list --vulnerable` は exit 0 を返すので単体ではゲートにならず、下では
+      # 読みやすいサマリ表示にのみ使う。
+      - name: Restore (audit advisories as errors)
+        run: >
+          dotnet restore McpSense.slnx
+          -p:NuGetAuditMode=all
+          -warnaserror:NU1901,NU1902,NU1903,NU1904
+
+      - name: Build
+        run: dotnet build McpSense.slnx --configuration Release --no-restore
+
+      - name: Vulnerability audit (summary)
+        run: dotnet list McpSense.slnx package --vulnerable --include-transitive
+
+      - name: Test
+        run: dotnet test McpSense.slnx --configuration Release --no-build --verbosity normal

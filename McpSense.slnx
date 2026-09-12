@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/McpSense.Ai/McpSense.Ai.csproj" />
+    <Project Path="src/McpSense.Core/McpSense.Core.csproj" />
+    <Project Path="src/McpSense.Server/McpSense.Server.csproj" />
+    <Project Path="src/McpSense.Tool/McpSense.Tool.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/McpSense.Core.Tests/McpSense.Core.Tests.csproj" />
+    <Project Path="tests/McpSense.Server.Tests/McpSense.Server.Tests.csproj" />
+  </Folder>
+</Solution>
