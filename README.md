@@ -275,25 +275,6 @@ first-party specs published by API vendors do. A proxy that is stricter than the
 use, so McpSense fails only when no document can be produced at all. Validation findings are
 reported as non-fatal problems and the operations are served regardless.
 
-## Project status
-
-| Milestone | State |
-| --- | --- |
-| M0 Scaffolding | Done |
-| M1 Spec parsing pipeline and `dump-operations` | Done |
-| M2 Dynamic MCP server over stdio, one tool per operation | Done |
-| M3 Tag grouping, meta-tool mode, search | Done |
-| M4 Opt-in AI description enhancement | Done |
-| M5 Authentication (API key, Bearer, OAuth 2.0 + PKCE) and distribution | Done |
-| M6 Documentation, sample specs, NuGet release | Done |
-
-Released versions are listed in the [changelog](CHANGELOG.md).
-
-## Contributing
-
-Issues and pull requests are welcome. Please keep source comments in English; user-facing
-documentation is written in English first, with a Japanese counterpart in a separate file.
-
 ## License
 
 [MIT](LICENSE)
