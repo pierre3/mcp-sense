@@ -10,9 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 現状
 
-**M0 〜 M6 完了(NuGet への実公開を除く)。** 機能もドキュメントもひととおり揃っている — spec 解析、meta-tool モード、AI 説明改善、OAuth(Authorization Code + PKCE・自動更新)、stdio トランスポート、`dotnet tool` 配布、`samples/`、CHANGELOG、リリースワークフロー。
+**M0 〜 M6 完了。2026-09-14 に `McpSense.Tool` 0.1.0-preview を nuget.org へ公開済み。** 機能もドキュメントもひととおり揃っている — spec 解析、meta-tool モード、AI 説明改善、OAuth(Authorization Code + PKCE・自動更新)、stdio トランスポート、`dotnet tool` 配布、`samples/`、CHANGELOG、リリースワークフロー。
 
-**残作業は NuGet への実公開のみ。** `release.yml` はタグ `v*` の push で発火するが、NuGet Trusted Publishing のポリシー登録(nuget.org 側、Owner: pierre3 / Repo: mcp-sense / Workflow: release.yml / Environment: nuget)が未了。**公開は外向きの不可逆操作なのでユーザーが行う。**
+リリースはタグ `v*` の push で `release.yml` が発火し、NuGet Trusted Publishing(OIDC)で公開する。API キーは持たない。nuget.org 側のポリシーは登録済み(Owner: pierre3 / Repo: mcp-sense / Workflow: release.yml / Environment: nuget / Glob: McpSense.Tool)。**公開は外向きの不可逆操作なので、タグ push はユーザーが行う。**
+
+**公開するのは `McpSense.Tool` だけ。** Core / Ai / Server は `IsPackable=false` にしてある。ツールパッケージは 3 つの DLL を `tools/net10.0/any/` に同梱し NuGet 依存を 1 つも宣言しないため、CLI 利用者には他が要らない。個別公開はまだ誰も求めていない公開 API を約束することになる。**後からパック対象に戻すのは容易だが、公開したパッケージは取り下げられない**という非対称性がこの判断の根拠(2026-09-14、ユーザー確認済み)。
 
 作業前に必ず `spec.md` を読むこと。以下はそこから抽出した「複数ファイルを読まないと分からない」レベルの恒久的文脈であり、詳細な経緯は `spec.md` 本文にある。
 

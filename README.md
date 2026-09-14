@@ -10,8 +10,8 @@ committed: point it at a spec and it serves.
 *Read this in [日本語](README_ja.md).*
 
 > **Status: preview.** Everything described below runs today — specs far too large to expose one
-> tool per operation, AI-assisted descriptions, and OAuth with automatic token refresh. It is not
-> published to NuGet yet, so install it from source.
+> tool per operation, AI-assisted descriptions, and OAuth with automatic token refresh. The command
+> line may still change between preview releases.
 
 ## What it is built around
 
@@ -50,17 +50,14 @@ answers with nonsense, the spec's own text is kept and the server still starts.
 
 ## Getting started
 
-McpSense is not on NuGet yet, so build and install it from source:
+Install the `mcpsense` command from NuGet:
 
 ```bash
-git clone https://github.com/pierre3/mcp-sense.git
-cd mcp-sense
-dotnet pack src/McpSense.Tool --configuration Release -o ./artifacts
-dotnet tool install --global --add-source ./artifacts McpSense.Tool --version 0.1.0-preview
+dotnet tool install --global McpSense.Tool --prerelease
 ```
 
-That installs the `mcpsense` command. To work on McpSense itself, `dotnet build McpSense.slnx` and
-run it with `dotnet run --project src/McpSense.Tool -- <command>` instead.
+To work on McpSense itself, clone the repository, run `dotnet build McpSense.slnx`, and use
+`dotnet run --project src/McpSense.Tool -- <command>` instead.
 
 [`samples/`](samples/) has a small spec written to exercise the parts that matter, with commands for
 trying each mode against it.
@@ -288,7 +285,7 @@ reported as non-fatal problems and the operations are served regardless.
 | M3 Tag grouping, meta-tool mode, search | Done |
 | M4 Opt-in AI description enhancement | Done |
 | M5 Authentication (API key, Bearer, OAuth 2.0 + PKCE) and distribution | Done |
-| M6 Documentation, sample specs, NuGet release | Done, except publishing to NuGet |
+| M6 Documentation, sample specs, NuGet release | Done |
 
 Released versions are listed in the [changelog](CHANGELOG.md).
 

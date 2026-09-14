@@ -9,10 +9,10 @@
 
 まだありません。
 
-## [0.1.0-preview]
+## [0.1.0-preview] - 2026-09-14
 
-最初のプレビューです。以下はすべて動作し、テストで確認していますが、NuGet への公開はまだで、
-API も安定していません。
+最初のプレビューです。NuGet に [`McpSense.Tool`](https://www.nuget.org/packages/McpSense.Tool) として
+公開しました。以下はすべて動作し、テストで確認していますが、コマンドラインはまだ安定していません。
 
 ### spec の公開
 
@@ -63,7 +63,6 @@ API も安定していません。
   `McpSense.Ai` / `McpSense.Server` を自身に同梱し、NuGet 依存を 1 つも宣言しないため、CLI の利用に
   他のパッケージは要りません。個別に公開すると、まだ誰も求めていない公開 API を約束することになります。
   後からパック対象に戻すのは容易ですが、公開したパッケージの取り下げはできません。
-- NuGet へは未公開。ソースからインストールしてください。
 
 [未リリース]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...HEAD
 [0.1.0-preview]: https://github.com/pierre3/mcp-sense/releases/tag/v0.1.0-preview

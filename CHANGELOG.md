@@ -9,10 +9,11 @@ public API may change between preview releases.
 
 Nothing yet.
 
-## [0.1.0-preview]
+## [0.1.0-preview] - 2026-09-14
 
-First preview. Everything below works and is covered by tests, but nothing is published to NuGet
-yet, and the API surface is not stable.
+First preview, published to NuGet as
+[`McpSense.Tool`](https://www.nuget.org/packages/McpSense.Tool). Everything below works and is
+covered by tests, but the command line is not stable yet.
 
 ### Serving a spec
 
@@ -67,7 +68,6 @@ yet, and the API surface is not stable.
   dependencies, so installing the CLI needs nothing else. Publishing them separately would commit
   to a public API before anyone has asked for one, and while packing can be turned on later, a
   published package cannot be withdrawn.
-- Nothing is published to NuGet yet; install from source.
 
 [Unreleased]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...HEAD
 [0.1.0-preview]: https://github.com/pierre3/mcp-sense/releases/tag/v0.1.0-preview

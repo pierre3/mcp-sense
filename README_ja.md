@@ -10,8 +10,8 @@ Claude Code などの MCP クライアントから、その API を直接呼び�
 *This document in [English](README.md).*
 
 > **状態: プレビュー。** 以下に書かれていることは全て現時点で動作します — 1 オペレーション = 1 ツールでは
-> 到底収まらない大規模 spec、AI による説明改善、トークン自動更新付きの OAuth。NuGet への公開はまだなので、
-> ソースからインストールしてください。
+> 到底収まらない大規模 spec、AI による説明改善、トークン自動更新付きの OAuth。プレビュー版のあいだは
+> コマンドラインが変わる可能性があります。
 
 ## 何を軸にしているか
 
@@ -48,16 +48,13 @@ allowlist / denylist もエスケープハッチとして利用できます。
 
 ## 使い始める
 
-McpSense はまだ NuGet に公開していないため、ソースからビルドしてインストールしてください。
+`mcpsense` コマンドを NuGet からインストールします。
 
 ```bash
-git clone https://github.com/pierre3/mcp-sense.git
-cd mcp-sense
-dotnet pack src/McpSense.Tool --configuration Release -o ./artifacts
-dotnet tool install --global --add-source ./artifacts McpSense.Tool --version 0.1.0-preview
+dotnet tool install --global McpSense.Tool --prerelease
 ```
 
-これで `mcpsense` コマンドが入ります。McpSense 自体を開発する場合は `dotnet build McpSense.slnx` して
+McpSense 自体を開発する場合は、リポジトリをクローンして `dotnet build McpSense.slnx` し、
 `dotnet run --project src/McpSense.Tool -- <command>` で実行してください。
 
 [`samples/`](samples/) に、要点を一通り含む小さな spec と、各モードを試すためのコマンドを置いてあります。
@@ -279,7 +276,7 @@ MCP クライアントは OpenAPI ドキュメントを一切見ないため、`
 | M3 タグによるグルーピング、meta-tool モード、検索 | 完了 |
 | M4 オプトインの AI 説明改善 | 完了 |
 | M5 認証(API キー、Bearer、OAuth 2.0 + PKCE)と配布 | 完了 |
-| M6 ドキュメント、サンプル spec、NuGet 公開 | NuGet 公開を除き完了 |
+| M6 ドキュメント、サンプル spec、NuGet 公開 | 完了 |
 
 リリースの内容は[変更履歴](CHANGELOG_ja.md)にあります。
 
