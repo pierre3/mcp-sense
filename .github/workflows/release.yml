@@ -1,6 +1,6 @@
 # Release: pack and publish to NuGet.org on a version tag.
 #
-# Push a tag like `v0.1.0-preview` to release every package, or run the workflow manually and give
+# Push a tag like `v0.1.0-preview` to release McpSense.Tool, or run the workflow manually and give
 # the version as an input. The resolved version is applied at BUILD time, not just at pack time, so
 # the assembly version and the .nupkg version stay in step.
 #
@@ -90,7 +90,15 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.value }}
         run: |
-          dotnet tool install --global --add-source ./artifacts McpSense.Tool ${VERSION:+--version "$VERSION"} --prerelease
+          # --version and --prerelease cannot be combined: an explicit version already selects a
+          # prerelease, and --prerelease is only needed when the version is left to
+          # Directory.Build.props.
+          if [ -n "${VERSION}" ]; then
+            SELECT_ARGS=(--version "${VERSION}")
+          else
+            SELECT_ARGS=(--prerelease)
+          fi
+          dotnet tool install --global --add-source ./artifacts McpSense.Tool "${SELECT_ARGS[@]}"
           export PATH="$PATH:$HOME/.dotnet/tools"
           mcpsense version
           mcpsense dump-operations samples/bookshop.yml
