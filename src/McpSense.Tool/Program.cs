@@ -1,9 +1,13 @@
 using Cocona;
+using McpSense.Tool.Commands;
 
-// M0 スキャフォールド時点の CLI 骨格。
-// M1 で `dump-operations`（spec 解析結果のダンプ）、M2 で `mcp`（MCP サーバー起動）を追加する。
 var builder = CoconaApp.CreateBuilder();
 var app = builder.Build();
+
+app.AddCommands<DumpOperationsCommand>();
+app.AddCommands<DumpToolsCommand>();
+app.AddCommands<McpCommand>();
+app.AddCommands<LoginCommand>();
 
 app.AddCommand("version", () =>
 {

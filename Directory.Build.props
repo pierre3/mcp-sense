@@ -1,7 +1,7 @@
 <Project>
-  <!-- 全プロジェクト共通設定（line-openapi-dotnet の規約を踏襲）。 -->
+  <!-- Settings shared by every project, following the conventions of line-openapi-dotnet. -->
   <PropertyGroup>
-    <!-- サポート対象はモダン .NET のみ。net10.0 単一。 -->
+    <!-- Modern .NET only: a single net10.0 target. -->
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -10,29 +10,30 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <!-- 外部依存のバージョンを一元管理する。
-       McpSense は Kiota のようなコード生成を行わないため、生成物とのロックステップ制約は無い。 -->
+  <!-- External dependency versions, managed in one place. McpSense runs no code generation, so
+       unlike line-openapi-dotnet there is no lockstep constraint with generated output. -->
   <PropertyGroup>
-    <!-- spec 解析。OpenAPI 3.0/3.1 の読み取り API（OpenApiDocument.LoadAsync → ReadResult）は
-         2.x 以降この単一パッケージに統合済み。旧 Microsoft.OpenApi.Readers は 2.0.0-preview9 で
-         更新が止まっており使用しない（Microsoft Learn の API リファレンスで確認）。 -->
+    <!-- Spec parsing. Since 2.x the OpenAPI readers live in this single package
+         (OpenApiDocument.LoadAsync returns a ReadResult). The old Microsoft.OpenApi.Readers
+         package stopped at 2.0.0-preview9 and must not be used. -->
     <MicrosoftOpenApiVersion>3.10.2</MicrosoftOpenApiVersion>
 
-    <!-- MCP C# SDK。McpServerHandlers.ListToolsHandler / CallToolHandler を使う
-         （McpServerOptions.Handlers 経由）。 -->
+    <!-- MCP C# SDK. Tools are served through McpServerHandlers.ListToolsHandler and
+         CallToolHandler, reached via McpServerOptions.Handlers. -->
     <ModelContextProtocolVersion>2.2.0</ModelContextProtocolVersion>
 
-    <!-- AI オプトイン機能の依存軸。McpSense.Ai だけが参照し、Core / Server は参照しない。
-         実装/DI パッケージ（Microsoft.Extensions.AI）ではなく Abstractions に留めることで、
-         AI 未使用時に不要な依存を持ち込まない。 -->
+    <!-- The dependency axis for the opt-in AI features. Only McpSense.Ai references it; Core and
+         Server must not. Staying on Abstractions rather than the implementation/DI package keeps
+         the dependency out of builds that never enable AI. -->
     <MicrosoftExtensionsAIVersion>10.10.0</MicrosoftExtensionsAIVersion>
 
-    <MicrosoftExtensionsHostingVersion>10.0.0</MicrosoftExtensionsHostingVersion>
+    <!-- Hosting and Http ship together and are kept on one version. -->
+    <MicrosoftExtensionsVersion>10.0.12</MicrosoftExtensionsVersion>
     <CoconaVersion>2.2.0</CoconaVersion>
   </PropertyGroup>
 
-  <!-- NuGet パッケージ共通メタデータ。PackageId はプロジェクト名（=AssemblyName）から既定継承。
-       個別の Description は各 .csproj で設定する。 -->
+  <!-- Shared NuGet package metadata. PackageId defaults to the project name (= AssemblyName), so
+       it is not set here; each .csproj supplies its own Description. -->
   <PropertyGroup>
     <Version>0.1.0-preview</Version>
     <Authors>pierre3</Authors>
@@ -47,7 +48,7 @@
     <PackageTags>mcp;model-context-protocol;openapi;proxy;ai;llm;tools</PackageTags>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
-    <!-- SourceLink（net10 SDK 同梱）・決定的ビルド・シンボルパッケージ -->
+    <!-- SourceLink (bundled with the net10 SDK), deterministic builds and symbol packages. -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
@@ -56,9 +57,9 @@
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
-  <!-- パッケージ対象プロジェクトにルート README を同梱（PackageReadmeFile の実体）。
-       テスト等 IsPackable=false のプロジェクトはパックされないため無害。 -->
+  <!-- Ship the repository README inside packable projects (the file PackageReadmeFile names).
+       Projects with IsPackable=false are never packed, so this is harmless for them. -->
   <ItemGroup Condition="'$(IsPackable)' != 'false' And '$(PackRootReadme)' != 'false'">
-    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" Condition="Exists('$(MSBuildThisFileDirectory)README.md')" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

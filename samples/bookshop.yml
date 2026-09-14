@@ -1,0 +1,267 @@
+openapi: 3.0.3
+info:
+  title: Bookshop API
+  version: 1.0.0
+  description: >
+    A small, self-contained spec for trying McpSense out. It is deliberately varied rather than
+    realistic: parameters sit in every supported location, one operation is deprecated, one opts out
+    of the document-level security, and the schemas use $ref so you can watch them get inlined.
+servers:
+  - url: https://api.bookshop.example/v1
+
+tags:
+  - name: books
+    description: The catalogue.
+  - name: orders
+    description: Placing and tracking orders.
+  - name: admin
+    description: Operations that change the catalogue.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /books:
+    get:
+      operationId: listBooks
+      summary: List books
+      description: Returns books in the catalogue, newest first.
+      tags: [books]
+      parameters:
+        - name: q
+          in: query
+          description: Free-text search over title and author.
+          schema: { type: string }
+        - name: genre
+          in: query
+          description: Restrict to these genres.
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [fiction, history, technical]
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Matching books.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+    post:
+      operationId: addBook
+      summary: Add a book
+      description: Adds a book to the catalogue. Fails if the ISBN is already present.
+      tags: [admin, books]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Book'
+      responses:
+        '201': { description: Created. }
+
+  /books/{isbn}:
+    parameters:
+      - name: isbn
+        in: path
+        required: true
+        description: The 13-digit ISBN, without hyphens.
+        schema: { type: string, pattern: '^[0-9]{13}$' }
+    get:
+      operationId: getBook
+      summary: Get one book
+      tags: [books]
+      responses:
+        '200':
+          description: The book.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404': { description: No such book. }
+    put:
+      operationId: replaceBook
+      summary: Replace a book
+      tags: [admin, books]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Book'
+      responses:
+        '200': { description: Replaced. }
+    delete:
+      operationId: removeBook
+      summary: Remove a book
+      description: Removes the book from the catalogue. Existing orders keep their copy of the data.
+      tags: [admin]
+      responses:
+        '204': { description: Removed. }
+
+  /books/{isbn}/reviews:
+    get:
+      operationId: listReviews
+      summary: List reviews for a book
+      tags: [books]
+      parameters:
+        - name: isbn
+          in: path
+          required: true
+          schema: { type: string }
+        - name: minRating
+          in: query
+          description: Only reviews at or above this rating.
+          schema: { type: integer, minimum: 1, maximum: 5 }
+      responses:
+        '200': { description: Reviews. }
+
+  /orders:
+    get:
+      operationId: listOrders
+      summary: List your orders
+      tags: [orders]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, shipped, cancelled] }
+      responses:
+        '200': { description: Orders. }
+    post:
+      operationId: placeOrder
+      summary: Place an order
+      description: >
+        Places an order for one or more books. The whole order is rejected if any line refers to a
+        book that is out of stock.
+      tags: [orders]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: A unique key per attempt, so a retry does not order twice.
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201': { description: Placed. }
+
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Get one order
+      tags: [orders]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: The order. }
+
+  /orders/{orderId}/cancel:
+    post:
+      operationId: cancelOrder
+      summary: Cancel an order
+      description: Cancels an order that has not shipped yet.
+      tags: [orders]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Cancelled. }
+        '409': { description: Already shipped. }
+
+  /orders/{orderId}/track:
+    get:
+      operationId: trackOrderLegacy
+      summary: Track an order (legacy)
+      description: Superseded by getOrder, which now returns the tracking fields.
+      deprecated: true
+      tags: [orders]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Tracking information. }
+
+  /admin/reindex:
+    post:
+      operationId: reindexCatalogue
+      summary: Rebuild the search index
+      tags: [admin]
+      security:
+        - adminKey: []
+      responses:
+        '202': { description: Accepted. }
+
+  /health:
+    get:
+      operationId: health
+      summary: Health check
+      description: Returns 200 while the service is accepting requests.
+      security: []
+      responses:
+        '200': { description: Healthy. }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    adminKey:
+      type: apiKey
+      name: X-Admin-Key
+      in: header
+
+  schemas:
+    Book:
+      type: object
+      required: [isbn, title, author]
+      properties:
+        isbn: { type: string, description: 'The 13-digit ISBN, without hyphens.' }
+        title: { type: string }
+        author: { type: string }
+        genre: { type: string, enum: [fiction, history, technical] }
+        publishedYear: { type: integer }
+        price:
+          $ref: '#/components/schemas/Money'
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: { type: number, description: 'Major units, e.g. 12.50.' }
+        currency: { type: string, description: 'ISO 4217 code, e.g. JPY.' }
+
+    OrderRequest:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        giftMessage: { type: string }
+
+    OrderLine:
+      type: object
+      required: [isbn, quantity]
+      properties:
+        isbn: { type: string }
+        quantity: { type: integer, minimum: 1 }

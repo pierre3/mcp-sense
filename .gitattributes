@@ -1,5 +1,5 @@
-# サンプル spec は LF 固定。Windows の autocrlf による書き換えを避け、上流から取得した
-# ファイルとバイト一致させる（ハッシュ比較・差分確認のノイズを防ぐ）。
+# Keep sample specs at LF so they stay byte-identical to the upstream files they were fetched
+# from; without this, autocrlf on Windows rewrites them and every hash or diff reports noise.
 samples/**/*.yml text eol=lf
 samples/**/*.yaml text eol=lf
 samples/**/*.json text eol=lf

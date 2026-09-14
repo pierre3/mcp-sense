@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- オプトインの AI 機能: DescriptionEnhancer（IChatClient による説明文書き換え）と
-       埋め込み検索（IEmbeddingGenerator + インメモリのコサイン類似度）。
-       Microsoft.Extensions.AI への依存はこのプロジェクトに閉じ込める。未設定時は素通しで、
-       AI 無しでも製品が完全に動作する前提を壊さないこと。 -->
+  <!-- Opt-in AI features: DescriptionEnhancer (rewriting descriptions through an IChatClient) and
+       embedding search (IEmbeddingGenerator plus in-memory cosine similarity).
+       The dependency on Microsoft.Extensions.AI is confined to this project. When nothing is
+       configured the pipeline passes spec text through unchanged, so the guarantee that McpSense
+       works fully without AI must not be broken. -->
   <PropertyGroup>
     <Description>Opt-in AI enhancements for McpSense: LLM-rewritten tool descriptions and embedding-based semantic search over operations.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="$(MicrosoftExtensionsAIVersion)" />
+    <!-- Logging abstractions only: the enhancer reports what it rewrote and what it could not. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\McpSense.Core\McpSense.Core.csproj" />

@@ -6,6 +6,7 @@
     <Project Path="src/McpSense.Tool/McpSense.Tool.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/McpSense.Ai.Tests/McpSense.Ai.Tests.csproj" />
     <Project Path="tests/McpSense.Core.Tests/McpSense.Core.Tests.csproj" />
     <Project Path="tests/McpSense.Server.Tests/McpSense.Server.Tests.csproj" />
   </Folder>

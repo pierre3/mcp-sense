@@ -1,6 +1,6 @@
-# CI: main への push / PR で build + test。
-# McpSense はコード生成を行わない（spec は実行時に解析する）ため、
-# line-openapi-dotnet にあるような生成・spec 同期のステップは存在しない。
+# CI: build and test on every push and pull request targeting main.
+# McpSense generates no code (specs are parsed at run time), so it has none of the generation or
+# spec-sync steps that line-openapi-dotnet needs.
 name: ci
 
 on:
@@ -20,10 +20,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # NuGet の脆弱性監査が実質のゲート。NuGetAudit は restore 中に走り、直接/推移依存の
-      # 脆弱なパッケージに NU1901-NU1904 を出す。これを error に昇格させてビルドを落とす。
-      # `dotnet list --vulnerable` は exit 0 を返すので単体ではゲートにならず、下では
-      # 読みやすいサマリ表示にのみ使う。
+      # The NuGet vulnerability audit is the real gate. NuGetAudit runs during restore and reports
+      # NU1901-NU1904 for vulnerable direct and transitive packages; promoting those to errors
+      # fails the build on any advisory. `dotnet list --vulnerable` returns exit 0 and so cannot
+      # gate anything - it is used below only for a readable summary.
       - name: Restore (audit advisories as errors)
         run: >
           dotnet restore McpSense.slnx

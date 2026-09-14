@@ -5,19 +5,25 @@
     <AssemblyName>McpSense.Tool</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <!-- `dotnet tool install -g McpSense.Tool` → コマンド名 `mcpsense`。 -->
+    <!-- `dotnet tool install -g McpSense.Tool` installs it as the `mcpsense` command. -->
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>mcpsense</ToolCommandName>
     <Description>CLI for McpSense: inspect an OpenAPI spec and serve it as an MCP server (`mcpsense mcp`).</Description>
 
-    <!-- アプリケーションであり公開 API 表面ではないため XML doc は生成しない。 -->
+    <!-- An application, not public API surface, so no XML documentation file. -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Cocona" Version="$(CoconaVersion)" />
+    <!-- The composition root owns the concrete AI stack. McpSense.Ai stays on Abstractions so that
+         builds which never enable AI do not carry an implementation or a provider. -->
+    <PackageReference Include="Microsoft.Extensions.AI" Version="$(MicrosoftExtensionsAIVersion)" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="$(MicrosoftExtensionsAIVersion)" />
+    <!-- DPAPI, used to encrypt stored OAuth tokens on Windows. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="$(MicrosoftExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Tool だけが Core / Ai / Server を束ねる。Ai は未設定なら素通しする前提。 -->
+    <!-- Only the CLI ties Core, Ai and Server together; Ai stays inert unless configured. -->
     <ProjectReference Include="..\McpSense.Core\McpSense.Core.csproj" />
     <ProjectReference Include="..\McpSense.Ai\McpSense.Ai.csproj" />
     <ProjectReference Include="..\McpSense.Server\McpSense.Server.csproj" />

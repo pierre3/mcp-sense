@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- spec 解析の中核: OperationModelBuilder（spec → OperationDescriptor）と
-       ToolGroupingEngine（タグベースのグルーピング / meta-tool モード切替）。
-       AI 依存（Microsoft.Extensions.AI）はここには入れない。McpSense.Ai に隔離する。 -->
+  <!-- The heart of spec analysis: OperationModelBuilder (spec to OperationDescriptor) and
+       ToolGroupingEngine (tag-based grouping and the switch to meta-tool mode).
+       AI dependencies (Microsoft.Extensions.AI) do not belong here; they stay in McpSense.Ai. -->
   <PropertyGroup>
     <Description>OpenAPI spec analysis for McpSense: builds an operation model from an OpenAPI 3.0/3.1 document and groups operations into MCP tools.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.OpenApi" Version="$(MicrosoftOpenApiVersion)" />
+    <!-- The YAML reader ships separately; Microsoft.OpenApi alone reads only JSON. Many public
+         specs (LINE's among them) are YAML, so this is required, not optional. -->
+    <PackageReference Include="Microsoft.OpenApi.YamlReader" Version="$(MicrosoftOpenApiVersion)" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="McpSense.Core.Tests" />

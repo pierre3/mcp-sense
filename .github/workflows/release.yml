@@ -1,0 +1,110 @@
+# Release: pack and publish to NuGet.org on a version tag.
+#
+# Push a tag like `v0.1.0-preview` to release every package, or run the workflow manually and give
+# the version as an input. The resolved version is applied at BUILD time, not just at pack time, so
+# the assembly version and the .nupkg version stay in step.
+#
+# Publishing uses NuGet.org Trusted Publishing (OIDC) rather than a long-lived API key secret. The
+# job requests a GitHub OIDC token, exchanges it for a short-lived key, then pushes. This needs a
+# Trusted Publishing policy on nuget.org matching:
+#   Repository Owner: pierre3 | Repository: mcp-sense
+#   Workflow File: release.yml | Environment: nuget
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version, for example 0.1.0-preview. Defaults to Directory.Build.props.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    # A protected environment lets nuget.org publishing require reviewers or tag protection rules
+    # (configure under Settings > Environments > nuget).
+    environment: nuget
+    permissions:
+      contents: read
+      id-token: write # request a GitHub OIDC token for NuGet Trusted Publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      # Take the version from the tag (dropping the leading "v"), else the manual input, else leave
+      # it empty so Directory.Build.props decides. The input goes through env rather than being
+      # expanded straight into the shell.
+      - name: Resolve version
+        id: ver
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${INPUT_VERSION}"
+          fi
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Releasing version: ${VERSION:-(from Directory.Build.props)}"
+
+      # The same audit gate CI uses. A release must not ship a package with a known advisory.
+      - name: Restore (audit advisories as errors)
+        run: >
+          dotnet restore McpSense.slnx
+          -p:NuGetAuditMode=all
+          -warnaserror:NU1901,NU1902,NU1903,NU1904
+
+      - name: Build
+        env:
+          VERSION: ${{ steps.ver.outputs.value }}
+        run: |
+          VERSION_ARG=""
+          if [ -n "${VERSION}" ]; then VERSION_ARG="-p:Version=${VERSION}"; fi
+          dotnet build McpSense.slnx --configuration Release --no-restore $VERSION_ARG
+
+      - name: Test
+        run: dotnet test McpSense.slnx --configuration Release --no-build --verbosity normal
+
+      - name: Pack
+        env:
+          VERSION: ${{ steps.ver.outputs.value }}
+        run: |
+          VERSION_ARG=""
+          if [ -n "${VERSION}" ]; then VERSION_ARG="-p:Version=${VERSION}"; fi
+          dotnet pack McpSense.slnx --configuration Release --no-build -o artifacts $VERSION_ARG
+
+      # Install the tool from the packed output and run it, so a broken package is caught here
+      # rather than by the first person who installs it.
+      - name: Verify the packed tool installs and runs
+        env:
+          VERSION: ${{ steps.ver.outputs.value }}
+        run: |
+          dotnet tool install --global --add-source ./artifacts McpSense.Tool ${VERSION:+--version "$VERSION"} --prerelease
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          mcpsense version
+          mcpsense dump-operations samples/bookshop.yml
+
+      # Exchange the GitHub OIDC token for a short-lived nuget.org API key (valid 1h).
+      - name: NuGet login (OIDC -> temp API key)
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: pierre3
+
+      - name: Push to NuGet.org
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

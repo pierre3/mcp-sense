@@ -2,7 +2,7 @@
 # McpSense / .gitignore
 # ---------------------------------------------------------------------------
 
-# ビルド成果物 / 中間ファイル
+# Build output and intermediates
 [Bb]in/
 [Oo]bj/
 [Oo]ut/
@@ -10,7 +10,7 @@
 [Ll]ogs/
 artifacts/
 
-# Visual Studio / Rider / VS Code のユーザー固有ファイル
+# Per-user files from Visual Studio, Rider and VS Code
 .vs/
 .vscode/
 .idea/
@@ -20,7 +20,7 @@ artifacts/
 *.sln.docstates
 *.rsuser
 
-# テスト結果 / カバレッジ
+# Test results and coverage
 [Tt]est[Rr]esult*/
 coverage*.json
 coverage*.xml
@@ -36,8 +36,8 @@ packages/
 .DS_Store
 Thumbs.db
 
-# セッション引継ぎメモ（ローカル専用・/handoff が生成）
+# Session handoff notes (local only, written by /handoff)
 docs/SESSION-HANDOFF.md
 
-# ローカル専用の Claude Code 設定
+# Local-only Claude Code settings
 .claude/settings.local.json
