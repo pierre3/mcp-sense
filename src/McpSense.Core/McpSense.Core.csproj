@@ -3,6 +3,10 @@
        ToolGroupingEngine (tag-based grouping and the switch to meta-tool mode).
        AI dependencies (Microsoft.Extensions.AI) do not belong here; they stay in McpSense.Ai. -->
   <PropertyGroup>
+    <!-- Not published: McpSense.Tool is the only package on NuGet, and it bundles this assembly,
+         so a CLI user needs nothing else. Shipping this separately would freeze a public API that
+         nobody has asked for yet; turning packing back on later is easy, unpublishing is not. -->
+    <IsPackable>false</IsPackable>
     <Description>OpenAPI spec analysis for McpSense: builds an operation model from an OpenAPI 3.0/3.1 document and groups operations into MCP tools.</Description>
   </PropertyGroup>
   <ItemGroup>

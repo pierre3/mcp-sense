@@ -279,7 +279,7 @@ MCP クライアントは OpenAPI ドキュメントを一切見ないため、`
 | M3 タグによるグルーピング、meta-tool モード、検索 | 完了 |
 | M4 オプトインの AI 説明改善 | 完了 |
 | M5 認証(API キー、Bearer、OAuth 2.0 + PKCE)と配布 | 完了 |
-| M6 ドキュメント、サンプル spec、NuGet 公開 | 次 |
+| M6 ドキュメント、サンプル spec、NuGet 公開 | NuGet 公開を除き完了 |
 
 リリースの内容は[変更履歴](CHANGELOG_ja.md)にあります。
 

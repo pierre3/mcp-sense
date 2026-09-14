@@ -5,6 +5,10 @@
        configured the pipeline passes spec text through unchanged, so the guarantee that McpSense
        works fully without AI must not be broken. -->
   <PropertyGroup>
+    <!-- Not published: McpSense.Tool is the only package on NuGet, and it bundles this assembly,
+         so a CLI user needs nothing else. Shipping this separately would freeze a public API that
+         nobody has asked for yet; turning packing back on later is easy, unpublishing is not. -->
+    <IsPackable>false</IsPackable>
     <Description>Opt-in AI enhancements for McpSense: LLM-rewritten tool descriptions and embedding-based semantic search over operations.</Description>
   </PropertyGroup>
   <ItemGroup>

@@ -7,7 +7,11 @@
        AI is opt-in, so this project does not reference McpSense.Ai - McpSense.Tool wires the two
        together. -->
   <PropertyGroup>
-    <Description>MCP server for McpSense: exposes an OpenAPI-derived tool catalog over stdio / Streamable HTTP and dispatches tool calls to the upstream API.</Description>
+    <!-- Not published: McpSense.Tool is the only package on NuGet, and it bundles this assembly,
+         so a CLI user needs nothing else. Shipping this separately would freeze a public API that
+         nobody has asked for yet; turning packing back on later is easy, unpublishing is not. -->
+    <IsPackable>false</IsPackable>
+    <Description>MCP server for McpSense: exposes an OpenAPI-derived tool catalog over stdio and dispatches tool calls to the upstream API.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ModelContextProtocol" Version="$(ModelContextProtocolVersion)" />

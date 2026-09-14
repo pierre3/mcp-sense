@@ -288,7 +288,7 @@ reported as non-fatal problems and the operations are served regardless.
 | M3 Tag grouping, meta-tool mode, search | Done |
 | M4 Opt-in AI description enhancement | Done |
 | M5 Authentication (API key, Bearer, OAuth 2.0 + PKCE) and distribution | Done |
-| M6 Documentation, sample specs, NuGet release | Next |
+| M6 Documentation, sample specs, NuGet release | Done, except publishing to NuGet |
 
 Released versions are listed in the [changelog](CHANGELOG.md).
 

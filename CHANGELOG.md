@@ -62,7 +62,12 @@ yet, and the API surface is not stable.
   safely needs an answer to who may connect — and, beyond that, to whose credentials a connecting
   user's calls should run under. Shipping a transport that works but must not be exposed would be a
   trap, so it waits until the authentication comes with it.
-- Not published to NuGet; install from source.
+- **The libraries as packages.** Only `McpSense.Tool` is published. The tool bundles
+  `McpSense.Core`, `McpSense.Ai` and `McpSense.Server` inside itself and declares no NuGet
+  dependencies, so installing the CLI needs nothing else. Publishing them separately would commit
+  to a public API before anyone has asked for one, and while packing can be turned on later, a
+  published package cannot be withdrawn.
+- Nothing is published to NuGet yet; install from source.
 
 [Unreleased]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...HEAD
 [0.1.0-preview]: https://github.com/pierre3/mcp-sense/releases/tag/v0.1.0-preview
