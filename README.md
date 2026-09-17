@@ -1,5 +1,9 @@
 # McpSense
 
+[![NuGet](https://img.shields.io/nuget/vpre/McpSense.Tool.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/McpSense.Tool/)
+[![NuGet downloads](https://img.shields.io/nuget/dt/McpSense.Tool.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/McpSense.Tool/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/pierre3/mcp-sense/blob/main/LICENSE)
+
 Turn any OpenAPI description into an MCP server, without writing a line of glue code.
 
 McpSense reads an OpenAPI 3.0/3.1 document at run time and exposes its operations as
@@ -277,4 +281,4 @@ reported as non-fatal problems and the operations are served regardless.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/pierre3/mcp-sense/blob/main/LICENSE)

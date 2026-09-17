@@ -1,5 +1,9 @@
 # McpSense
 
+[![NuGet](https://img.shields.io/nuget/vpre/McpSense.Tool.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/McpSense.Tool/)
+[![NuGet downloads](https://img.shields.io/nuget/dt/McpSense.Tool.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/McpSense.Tool/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/pierre3/mcp-sense/blob/main/LICENSE)
+
 OpenAPI の定義ファイルから MCP サーバーを起動するツールです。変換用のコードを書く必要はありません。
 
 McpSense は OpenAPI 3.0/3.1 のドキュメントを実行時に読み込み、各オペレーションを
@@ -266,4 +270,4 @@ McpSense はドキュメントをまったく生成できなかった場合の�
 
 ## ライセンス
 
-[MIT](LICENSE)
+[MIT](https://github.com/pierre3/mcp-sense/blob/main/LICENSE)
