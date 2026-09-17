@@ -64,7 +64,8 @@ To work on McpSense itself, clone the repository, run `dotnet build McpSense.sln
 `dotnet run --project src/McpSense.Tool -- <command>` instead.
 
 [`samples/`](samples/) has a small spec written to exercise the parts that matter, with commands for
-trying each mode against it.
+trying each mode against it, and a step-by-step walkthrough of serving GitHub's REST API — 1,239
+operations — to an MCP client.
 
 Then inspect a spec to see the operations McpSense extracts from it:
 

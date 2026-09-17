@@ -59,6 +59,7 @@ McpSense 自体を開発する場合は、リポジトリをクローンして `
 `dotnet run --project src/McpSense.Tool -- <command>` で実行してください。
 
 [`samples/`](samples/) に、要点を一通り含む小さな spec と、各モードを試すためのコマンドを置いてあります。
+1,239 オペレーションある GitHub の REST API を MCP クライアントから使うまでの手順も、あわせて置いてあります。
 
 まず spec を読ませて、抽出されるオペレーションを確認します。
 

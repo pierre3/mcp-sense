@@ -7,7 +7,15 @@ public API may change between preview releases.
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- Read a spec from a URL whatever the server labels it. The format is now taken from the URL or
+  file extension first, from the media type second, and from the content itself last, instead of
+  from the response's `Content-Type` alone. Specs served as `text/plain` — which is how
+  `raw.githubusercontent.com` serves every file — failed with `Format 'plain' is not supported`.
+- Report every failure to obtain a spec as a load error: a missing file, a refused connection, an
+  HTTP error status, or a payload that is not a document. These surfaced as an unhandled exception
+  with a stack trace, and an HTTP error page was parsed as though it were the spec.
 
 ## [0.1.0-preview] - 2026-09-14
 
