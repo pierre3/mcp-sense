@@ -82,10 +82,12 @@ mcpsense mcp samples/bookshop.yml --bearer-token "$TOKEN"
 
 このコマンドを MCP クライアントに登録します。登録方法は[メインの README](../README_ja.md) を参照してください。
 
+---
+
 ## GitHub API を MCP サーバーとして使う
 
-`bookshop.yml` は意図的に小さくしてあります。対する GitHub の REST API は **47 タグ・1,239 オペレーション**
-という反対側の極端な例で、誰でも試せます。以下はその手順です。
+`bookshop.yml` は意図的に小さくしてあります。一方 GitHub の REST API は **47 タグ・1,239 オペレーション**
+と桁違いに大きく、しかも誰でも試せます。以下はその手順です。
 
 ### 1. spec を取得する
 
@@ -118,7 +120,9 @@ groups:     actions (199), activity (34), agent-tasks (5), agents (30), apps (37
 GitHub は personal access token をベアラートークンとして受け付けます。
 [fine-grained token](https://github.com/settings/personal-access-tokens) を作成し、モデルに触らせたい
 リポジトリと権限だけを付与してください。**トークンにできることは、そのままツール呼び出しにできること**です。
-[classic token](https://github.com/settings/tokens) でも同様に動きます。
+[classic token](https://github.com/settings/tokens) でも同様に動きます。トークンを手で更新したくない
+場合は、代わりに OAuth で認証してください。後述の
+[GitHub を OAuth で認証する](#github-を-oauth-で認証する) を参照。
 
 他に設定は要りません。ベース URL は spec の `servers`(`https://api.github.com`)から取得します。
 GitHub は `User-Agent` の無いリクエストを拒否しますが、McpSense は `--header` で上書きしない限り
@@ -211,3 +215,190 @@ EOF
 `sleep` を挟んで **stdin を開いたままにする**のが要点です。ファイルを流し込んで即 EOF にすると、
 応答が flush される前にシャットダウンが始まり、stdout が空になります。
 実際の MCP クライアントは stdin を保持するので、手で叩くときだけの注意点です。
+
+## GitHub を OAuth で認証する
+
+personal access token は手軽ですが、期限切れのたびに手で更新が必要です。長く使うなら、
+GitHub の **OAuth 2.0 認可コードフロー(PKCE)** で認証すると、以降はトークンが自動で更新されます。
+
+ブラウザでの承認は `mcpsense login` で一度だけ行います。サーバー(`mcpsense mcp`)は
+stdin/stdout をプロトコルに使うためブラウザを開けず、保存済みのトークンを読んで期限切れ時に
+裏で更新するだけです。
+
+### 1. OAuth App を登録する
+
+classic OAuth App は API では作れないので、ブラウザで作成します。
+**Settings → Developer settings → OAuth Apps → New OAuth App**。
+
+| 項目 | 値 |
+| --- | --- |
+| Application name | 任意 |
+| Homepage URL | 任意 |
+| **Authorization callback URL** | `http://127.0.0.1:8765/`(末尾スラッシュ含む) |
+| Enable Device Flow | チェックしない |
+
+登録したら **Client ID** をコピーし、**Generate a new client secret** でシークレットを生成します
+(一度しか表示されません)。コールバックのポート(ここでは `8765`)は `--oauth-redirect-port` と
+一致させてください。
+
+### 2. シークレットを設定ファイルの外に置く
+
+Client ID は秘密ではないので `.mcp.json` に直書きで構いませんが、シークレットは書かず、
+MCP クライアントが読める環境変数に入れます。
+
+```powershell
+[Environment]::SetEnvironmentVariable("GH_OAUTH_SECRET", "<secret>", "User")
+```
+
+環境変数は、設定した時点で起動済みのプロセスには反映されません。設定後はシェルを、
+のちほど MCP クライアントも再起動してください。
+
+### 3. 一度だけ認可する
+
+```bash
+mcpsense login \
+  --oauth-authorization-endpoint https://github.com/login/oauth/authorize \
+  --oauth-token-endpoint https://github.com/login/oauth/access_token \
+  --oauth-client-id <client-id> \
+  --oauth-client-secret "$GH_OAUTH_SECRET" \
+  --oauth-scope repo \
+  --oauth-redirect-port 8765
+```
+
+ブラウザで `repo` スコープを承認します(`repo` はプライベートリポジトリにも届きます。公開だけなら
+絞ってください)。成功すると次が表示されます。
+
+```text
+Authorized. Tokens stored.
+The access token expires at <time>Z and will be refreshed automatically.
+```
+
+ブラウザに出る「タブを閉じてよい」という画面は、トークン交換が終わる前の表示です。完了したかは
+上のコンソール出力で確認してください。認可コードは使い捨てで短命なので、途中で止まったら
+やり直せば大丈夫です。
+
+### 4. サーバー側の設定
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "mcpsense",
+      "args": [
+        "mcp",
+        "C:/path/to/api.github.com.json",
+        "--oauth-authorization-endpoint", "https://github.com/login/oauth/authorize",
+        "--oauth-token-endpoint", "https://github.com/login/oauth/access_token",
+        "--oauth-client-id", "<client-id>",
+        "--oauth-client-secret", "${GH_OAUTH_SECRET}",
+        "--oauth-scope", "repo",
+        "--header", "X-GitHub-Api-Version: 2022-11-28"
+      ]
+    }
+  }
+}
+```
+
+トークンは **認可エンドポイント・Client ID・スコープ** から作ったキーで保存されます。この 3 つが
+`login` と `mcp` で一致していないと、サーバーはトークンを見つけられません。トークンエンドポイントと
+シークレットはキーには含まれませんが、更新に必要なので同じく渡します。
+
+## AI 機能を有効にする
+
+ここまでは AI なしで動きます。チャットモデルを指定すると説明が書き換えられ、埋め込みモデルを
+指定すると検索が字句ベースから意味ベースに変わります。[メインの README](../README_ja.md) にある
+2 つの `--ai-*` 機能を、実際に動くバックエンドで試します。
+
+### OpenAI 互換エンドポイントを選ぶ
+
+> **GitHub Models は 2026-07-30 に終了しました。** `models.github.ai` はどのリクエストにも
+> `text/plain` の `OK` を返すだけで、バックエンドには使えません。GitHub は代替として
+> Azure AI Foundry か GitHub Copilot を挙げています。
+
+ここでは OpenAI 互換エンドポイントを持つ **Azure AI Foundry** を使います。チャットモデルと
+埋め込みモデルをデプロイしてください(この手順では `gpt-4.1-mini` と `text-embedding-3-small`)。
+Azure の v1 エンドポイントは次の形式です。
+
+```text
+https://<resource>.services.ai.azure.com/openai/v1/responses
+```
+
+McpSense に渡すのは **末尾の `/responses` を除いたベース URL** です。`/chat/completions` と
+`/embeddings` は McpSense が付けます。
+
+```text
+https://<resource>.services.ai.azure.com/openai/v1
+```
+
+API キーは OAuth シークレットと同様、環境変数に入れておきます。
+
+```powershell
+[Environment]::SetEnvironmentVariable("AZURE_AI_KEY", "<key>", "User")
+```
+
+### フラグを足す
+
+`--ai-*` オプションは `mcp` でも `dump-tools` でも、認証フラグと並べて指定できます。
+
+```json
+"args": [
+  "mcp",
+  "C:/path/to/api.github.com.json",
+  "--bearer-token", "github_pat_...",
+  "--header", "X-GitHub-Api-Version: 2022-11-28",
+  "--ai-model", "gpt-4.1-mini",
+  "--ai-embedding-model", "text-embedding-3-small",
+  "--ai-endpoint", "https://<resource>.services.ai.azure.com/openai/v1",
+  "--ai-api-key", "${AZURE_AI_KEY}"
+]
+```
+
+`dump-tools` は `--ai-model` / `--ai-endpoint` / `--ai-api-key` を受け付けますが、
+`--ai-embedding-model` は受け付けません。埋め込みは `mcp` の `search_operations` でのみ使います。
+
+### 説明の書き換え
+
+同じタグに `--ai-model` ありとなしで `dump-tools` を流すと違いが分かります。
+GitHub の `rate-limit` 操作が分かりやすい例です。
+
+```text
+before  rate-limit_get  (GET /rate_limit)
+        | Get rate limit status for the authenticated user
+        | > [!NOTE] Accessing this endpoint does not count against your REST API rate limit.
+        | ... カテゴリごとの注記と docs リンクで約 20 行
+
+after   get_rate_limit_status  (GET /rate_limit)
+        | Get rate limit status for the authenticated user
+        | Retrieve the current rate limit status ... does not count against your rate limit.
+```
+
+変わるのは 2 点です。名前が動詞で始まる `snake_case` に整い(`rate-limit_get` →
+`get_rate_limit_status`)、約 20 行のドキュメント断片が数文に縮みます。モデルのツール選択を
+いちばん助けるのは分かりやすい名前で、これがこの機能の狙いです。
+
+書き換わるのは操作名・操作の説明・**URL** パラメータの説明(path / query / header。例えば
+`owner`、`repo`、issue 番号)です。リクエストボディの各フィールドは対象外で、`create_issue` の
+ような書き込みでは `title` / `body` / `labels` の説明は spec のまま(Markdown 込み)残ります。
+型・`required`・`enum`・パラメータ名も変わりません。
+
+### セマンティック検索
+
+埋め込みモデルを指定すると、`search_operations` が意味でマッチするようになり、操作名と語が
+重ならないクエリでも見つかります。
+
+| クエリ | 1 位ヒット |
+| --- | --- |
+| stop watching a repository so I no longer get notifications | `delete_repo_subscription` |
+| invite a person to collaborate with write access | `add_repo_collaborator` |
+| merge a pull request | `merge_pull_request` |
+
+弱いのは言語をまたいだ並び順です。同じ内容を日本語で聞くと、意図した操作が語の似た別の操作の
+下に埋もれることがあります。**英語 + `--tag` での絞り込み** を併せると安定します。
+
+### 初回のコスト
+
+`--ai-model` 付きの初回起動では全操作を書き換えるため、GitHub 仕様では約 124 回(10 操作ずつ)の
+リクエストが出ます。2 回目以降はディスクキャッシュを読むだけで、何も送りません。`--tag` / `--allow` /
+`--deny` は書き換えの **後** に効くので、絞り込んでも初回のコストは変わりません。
+キャッシュは既定で `%LOCALAPPDATA%\mcpsense\ai-cache\` に保存され、操作のテキストをキーにするので、
+spec を編集すれば自動的に別のキーになります。
