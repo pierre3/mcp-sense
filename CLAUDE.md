@@ -16,7 +16,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **公開するのは `McpSense.Tool` だけ。** Core / Ai / Server は `IsPackable=false` にしてある。ツールパッケージは 3 つの DLL を `tools/net10.0/any/` に同梱し NuGet 依存を 1 つも宣言しないため、CLI 利用者には他が要らない。個別公開はまだ誰も求めていない公開 API を約束することになる。**後からパック対象に戻すのは容易だが、公開したパッケージは取り下げられない**という非対称性がこの判断の根拠(2026-09-14、ユーザー確認済み)。
 
-作業前に必ず `spec.md` を読むこと。以下はそこから抽出した「複数ファイルを読まないと分からない」レベルの恒久的文脈であり、詳細な経緯は `spec.md` 本文にある。
+以下は「複数ファイルを読まないと分からない」レベルの恒久的文脈をまとめたもの。かつては詳細な経緯を `spec.md` に置いていたが、1.0.0 リリース時に役目を終えて削除した。以降はこのファイルが唯一の内部作業文脈となる。
+
+## 開発の経緯(マイルストーン)
+
+すべて完了済み。個々の決定は下記「設計判断」各節に、実装上の落とし穴は「実装上の事実」節にある。
+
+- **M0 スキャフォールド**(2026-09-12): ソリューション構成・`Directory.Build.props`(.NET 10)・MIT・CI 雛形。
+- **M1 spec 解析**(2026-09-12): `OpenApiDocument.LoadAsync` → `OperationDescriptor`、`dump-operations`。LINE の 8 spec(計 110 オペレーション)で検証。
+- **M2 素朴な動的サーバー**(2026-09-12): 1:1 ツール化を stdio で実現。`ToolCatalogBuilder` / `ApiDispatcher` / 低レベルハンドラ、`mcp` / `dump-tools`。
+- **M3 グルーピング/検索**(2026-09-12): meta-tool モード・語彙/埋め込み検索。GitHub spec で `tools/list` を 1,885,129 → 3,153 バイトに削減。
+- **M4 AI 説明改善**(2026-09-12): `DescriptionEnhancer`・`FileDistributedCache`・OpenAI 互換エンドポイントの CLI 配線。
+- **M5 認証・配布**(2026-09-12): 上流 API への OAuth 2.0 + PKCE(`mcpsense login`・自動更新)、`dotnet tool` 配布。
+- **M6 ドキュメント/公開**(2026-09-13): `samples/`・CHANGELOG・`release.yml`(Trusted Publishing)。Streamable HTTP はここで削除。
+- **1.0.0 リリース**(2026-09-27): GitHub REST API を未認証 / PAT / OAuth で通し検証し、preview を外した。
 
 ## プロジェクト概要
 
@@ -32,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 起動時に spec を解析してツールカタログを構築し、呼び出し時にそれを引いて HTTP リクエストへ変換する、という 2 フェーズ構成:
 
 ```
-OpenApiDocument (Microsoft.OpenApi.Readers)
+OpenApiDocument (Microsoft.OpenApi / OpenApiDocument.LoadAsync)
   → OperationModelBuilder   … IReadOnlyList<OperationDescriptor>
                                (operationId, method+pathテンプレート, param配置(path/query/header/body),
                                 requestBody の JSON Schema, securityRequirement, tags)
@@ -53,15 +66,15 @@ CallToolHandler → ToolInvocationPlan → HttpRequestMessage 組み立て
 
 ### 重要な設計制約
 
-- **MCP ツールは低レベルハンドラで公開する。** `AIFunctionFactory` / `McpServerTool.Create` などの高レベル API は C# デリゲートのコンパイル時パラメータからリフレクションでスキーマを生成する設計のため、形が実行時にしか決まらない本ツールでは使えない(ModelContextProtocol C# SDK のドキュメントで確認済み)。`McpServerHandlers.ListToolsHandler` / `CallToolHandler` を自前実装し、生の `Tool`(Name/Description/InputSchema: JsonElement)を返すのが正しい実装。これを「高レベル API で書き直す」方向のリファクタは誤り。
+- **MCP ツールは低レベルハンドラで公開する。** `AIFunctionFactory` / `McpServerTool.Create` などの高レベル API は C# デリゲートのコンパイル時パラメータからリフレクションでスキーマを生成する設計のため、形が実行時にしか決まらない本ツールでは使えない(ModelContextProtocol C# SDK のドキュメントで確認済み)。`McpServerHandlers.ListToolsHandler` / `CallToolHandler` を自前実装し(`McpServerOptions.Handlers` 経由で設定)、生の `Tool`(Name/Description/InputSchema: JsonElement)を返すのが正しい実装。これを「高レベル API で書き直す」方向のリファクタは誤り。
 - **Microsoft.Extensions.AI 依存は `McpSense.Ai` に隔離する。** `Core` / `Server` がこれに依存してはならない(AI オプトイン制約の実装上の裏付け)。
-- **トランスポートは stdio のみ。** Streamable HTTP は一度実装したが 2026-09-13 に削除した(下記「M6 の判断」参照)。
+- **トランスポートは stdio のみ。** Streamable HTTP は一度実装したが 2026-09-13 に削除した(下記「設計判断 — トランスポート」参照)。
 
 - **ソースコードのコメント・XML doc は英語**(`.cs` / `.csproj` / `Directory.Build.props` / CI yml / `.gitignore` 等を含む)。
 - **公開ドキュメントは英語を正、日本語は別ファイル**。`README.md` / `README_ja.md`(作成済み。片方だけ直さず必ず対で更新する)、`CHANGELOG.md` / `CHANGELOG_ja.md`(M6 で作成)。`README.md` は `Directory.Build.props` から全パッケージに同梱されるので、内容が古いと NuGet 上の表示も古くなる。README の「Project status」表はマイルストーン完了のたびに更新すること。
-- `CLAUDE.md` と `spec.md` は公開ドキュメントではなく内部の作業文脈なので日本語のままでよい。
+- `CLAUDE.md` は公開ドキュメントではなく内部の作業文脈なので日本語のままでよい。
 
-## M6 の判断 — Streamable HTTP を削除した
+## 設計判断 — トランスポート(Streamable HTTP を削除した)
 
 2026-09-13、ユーザーの判断で `--http` / `--http-url` と `ModelContextProtocol.AspNetCore` 依存を削除した。**理由を残しておかないと、いつか「せっかく実装したのに」と戻されるので注意。**
 
@@ -72,9 +85,9 @@ CallToolHandler → ToolInvocationPlan → HttpRequestMessage 組み立て
   2. **上流の認証情報をどうするか。** 現状 `McpSenseServerOptions` はサーバー全体で 1 組しか持たないため、1 だけ実装しても接続した全員が同じアカウントとして上流 API を叩く。ユーザーごとに分けるなら接続元トークンの引き渡しが要り、設計の見直しを伴う。
 - 削除したコードは git 履歴にある(`McpCommand` の `WebApplication` 分岐と `MapMcp()`)。実装量は 10 行程度なので、書き直すコストは低い。
 
-## M5 の設計判断
+## 設計判断 — 認証(OAuth 2.0 + PKCE)
 
-- **spec.md の M5 記述は 2 種類の OAuth を混同していた。** 「JWT 検証・スコープ強制」は McpSense が**リソースサーバー**になる側(MCP クライアント → McpSense)、「トークン自動更新」は**OAuth クライアント**になる側(McpSense → 上流 API)の話。**実装したのは後者のみ**(2026-09-12 にユーザー確認済み)。前者は Streamable HTTP ごと M6 で削除した。
+- **2 種類の OAuth を混同しないこと。** 「JWT 検証・スコープ強制」は McpSense が**リソースサーバー**になる側(MCP クライアント → McpSense)、「トークン自動更新」は**OAuth クライアント**になる側(McpSense → 上流 API)の話。**実装したのは後者のみ**(2026-09-12 にユーザー確認済み)。前者は Streamable HTTP ごと M6 で削除した。
 - **`login` は別コマンドでなければならない。** stdio サーバーは stdin/stdout をプロトコルに占有されており、同意画面を見せるチャネルが無い。サーバーは保存済みトークンの読み取りと更新のみを行い、未ログインなら `mcpsense login` を促すツールエラーを返す。**サーバー内で対話フローを開始する実装にしてはならない。**
 - **PKCE は必須**(オプションにしない)。ユーザーのマシン上で動くパブリッククライアントなので秘密を持てず、ループバック上の認可コードを同一マシンの別プロセスに引き換えられうる。`state` 検証も同様に必須。
 - **リフレッシュは `SemaphoreSlim` で直列化する。** 同時実行のツール呼び出しが同じリフレッシュトークンを並行して引き換えると、ローテーションするプロバイダではログインごと無効化される。
@@ -82,22 +95,25 @@ CallToolHandler → ToolInvocationPlan → HttpRequestMessage 組み立て
 - **トークンの保管キーはスコープを含む。** スコープ違いで同じトークンを共有すると、付与された範囲と異なる権限で呼ぶことになる。
 - **トランスポートは stdio 固定。** `McpCommand` は `Host.CreateApplicationBuilder()` + `WithStdioServerTransport()` のみ。
 
-- **キャッシュはファイルベースでなければならない。** `UseDistributedCache` に `MemoryDistributedCache` を渡すと、CLI プロセスは実行ごとに終了するため毎回 LLM を叩く。spec.md の「起動のたびにLLMを叩かない」が成立しないので、`McpSense.Tool/FileDistributedCache.cs` を実装した。キャッシュキーはリクエスト(= オペレーション原文を含む)から導出されるため、spec を編集すれば自動的に別キーになる。**有効期限は持たせていない**(持たせる必要がない)。
+## 設計判断 — AI 説明改善(オプトイン)
+
+- **キャッシュはファイルベースでなければならない。** `UseDistributedCache` に `MemoryDistributedCache` を渡すと、CLI プロセスは実行ごとに終了するため毎回 LLM を叩く。「起動のたびに LLM を叩かない」という要件が成立しないので、`McpSense.Tool/FileDistributedCache.cs` を実装した。キャッシュキーはリクエスト(= オペレーション原文を含む)から導出されるため、spec を編集すれば自動的に別キーになる。**有効期限は持たせていない**(持たせる必要がない)。
 - **`ChatClientBuilder` / `UseDistributedCache` は `Microsoft.Extensions.AI`(実装パッケージ)にあり、Abstractions には無い。** `McpSense.Ai` を Abstractions のみに保つ制約を守るため、キャッシュ装飾と OpenAI クライアント生成は合成ルートである `McpSense.Tool`(`AiOptions.cs`)で行う。**`McpSense.Ai` に実装パッケージやプロバイダを足してはならない。**
 - **AI の失敗は致命にしない。** モデルのエラー・タイムアウト・パース不能な応答はすべて警告ログのみで、該当オペレーションは spec 原文を保つ。`DescriptionEnhancer` の catch を「握りつぶし」と見て例外を投げるように変更してはならない。これは「AI 無しで完全動作する」制約の実行時の担保。
 - **書き換えはバッチ処理する。** 1 オペレーション 1 リクエストだと GitHub spec で 1,229 リクエストになる。既定 10 件/リクエスト。
+- **書き換え対象は名前・説明・URL パラメータ(path / query / header)の説明のみ。** リクエストボディのフィールド説明は対象外(`DescriptionEnhancer.Describe` が `operation.Parameters` だけをモデルに渡すため)。型・`required`・`enum`・パラメータ名も変更しない。README の「AI によるサポート機能」の記述はこの事実に基づく。
 - **モデルが返した名前は正規化と一意化を必ず通す。** カタログは名前をキーにしており、モデルは同じ名前を 2 回返すことがある。
 
-## M3 の設計判断(spec.md からの意図的な逸脱)
+## 設計判断 — グルーピングと検索(大規模 spec 対応。当初計画からの意図的な逸脱を含む)
 
-- **検索は Core の語彙ベースが既定、埋め込みは `McpSense.Ai` のオプトイン上位互換。** spec.md は検索を `IEmbeddingGenerator` 前提で書いていたが、meta-tool モードの発動条件は **spec のサイズ**であって AI の有無ではない。検索が埋め込み専用だと大規模 spec が AI 必須になり、「デフォルトは AI 不要で完全動作」という中核制約と衝突する。そこで `IOperationSearch` を Core に置き、`LexicalOperationSearch`(識別子の単語分割 + 希少語重み + 名前 > 説明文の重み付け)を既定に、`EmbeddingOperationSearch` を差し替え可能にした。**この構造を崩して Core を AI 依存にしてはならない。**
+- **検索は Core の語彙ベースが既定、埋め込みは `McpSense.Ai` のオプトイン上位互換。** 当初計画では検索を `IEmbeddingGenerator` 前提としていたが、meta-tool モードの発動条件は **spec のサイズ**であって AI の有無ではない。検索が埋め込み専用だと大規模 spec が AI 必須になり、「デフォルトは AI 不要で完全動作」という中核制約と衝突する。そこで `IOperationSearch` を Core に置き、`LexicalOperationSearch`(識別子の単語分割 + 希少語重み + 名前 > 説明文の重み付け)を既定に、`EmbeddingOperationSearch` を差し替え可能にした。**この構造を崩して Core を AI 依存にしてはならない。**
 - **meta-tool の引数名は `operationId` ではなく `operation`。** カタログのキーは正規化・重複解消済みのツール名であり、spec の `operationId` と一致するとは限らないため。
 - **タググループはツールとして公開しない。** グループは「目次」であり、`search_operations` の絞り込みと server instructions での提示に使う。
 - **meta-tool モードではオペレーション名を直接呼べない。** モデルに知らされていない名前であり、通してしまうと 2 つのモードの挙動が静かに食い違う。`TryGet`(公開済み)と `TryGetOperation`(全件)を分けてあるのはこのため。
 
-## M1 / M2 / M3 で判明した実装上の事実
+## 実装上の事実(spec 解析・HTTP・stdio)
 
-実 spec と実クライアントに当てて初めて分かったもの。spec.md の初版には無い。
+実 spec と実クライアントに当てて初めて分かったもの。
 
 - **YAML リーダーは別パッケージ**。`Microsoft.OpenApi` 単体は JSON しか読めず、YAML には `Microsoft.OpenApi.YamlReader` と `settings.AddYamlReader()` の明示登録が要る。未登録だと `Format 'yaml' is not supported` で落ちる。公開 spec は YAML が多いので必須依存。リーダー設定は `OpenApiSpecLoader` の 1 箇所に集約してあり、テストも同じ経路を通す。
 - **バリデーションエラーは致命扱いにしない**。リーダーの検証ルールは厳しく、LINE の本番 spec ですら discriminator ルールで 3 件エラーになる。McpSense は任意の API をプロキシする道具なので、API 提供元より厳格だと使い物にならない。`OpenApiSpecLoader` はドキュメントが生成できなかった場合のみ例外を投げ、検証結果は `Problems`(非致命)として返す。
@@ -159,7 +175,7 @@ dotnet restore McpSense.slnx -p:NuGetAuditMode=all -warnaserror:NU1901,NU1902,NU
 - **Context7 MCP** — `/modelcontextprotocol/csharp-sdk` に公式 C# SDK が揃っている(618 スニペット)。**低レベルハンドラ API(`ListToolsHandler` / `CallToolHandler` / 生の `Tool`)の確認は必ずここを引くこと。**
 - **Microsoft Learn MCP** — `Microsoft.OpenApi`、Microsoft.Extensions.AI(`IChatClient` / `IEmbeddingGenerator` / `UseDistributedCache`)、`IHttpClientFactory` の一次情報。`microsoft_docs_search` で当たりを付け、`microsoft_code_sample_search` で実コード、足りなければ `microsoft_docs_fetch` で全文。
 
-**パッケージ選定の注意**: spec 読み取りは `Microsoft.OpenApi`(3.10.2)の `OpenApiDocument.LoadAsync` → `ReadResult` を使う。**`Microsoft.OpenApi.Readers` は使わない** — 2.x でリーダーが本体へ統合された結果 `2.0.0-preview9` で更新が止まっており、名前から素直に選ぶと死んだパッケージを掴む。spec.md の初版はこの旧名で書かれていた(訂正済み)。
+**パッケージ選定の注意**: spec 読み取りは `Microsoft.OpenApi`(3.10.2)の `OpenApiDocument.LoadAsync` → `ReadResult` を使う。**`Microsoft.OpenApi.Readers` は使わない** — 2.x でリーダーが本体へ統合された結果 `2.0.0-preview9` で更新が止まっており、名前から素直に選ぶと死んだパッケージを掴む。
 
 **Kiota は導入しない。** `line-openapi-dotnet` は Kiota コード生成が中核だったが、McpSense は spec を実行時に解析する動的プロキシであり codegen を一切行わない。兄弟リポジトリからのパターン流用でここを取り違えないこと。`docfx` は M6 のドキュメント整備時に `.config/dotnet-tools.json` へ追加する。
 
@@ -179,5 +195,5 @@ dotnet restore McpSense.slnx -p:NuGetAuditMode=all -warnaserror:NU1901,NU1902,NU
 
 ## 決定済み / 未確定
 
-- **確定**: プロジェクト名 `McpSense`(2026-09-12。GitHub/NuGet で衝突なし確認済み — 蒸し返さないこと)。AI 機能はオプトイン。
-- **未確定**: M1 の検証に使う実 spec の選定(Stripe/GitHub 公開 spec へのアクセス方法を含む)。
+- **確定**: プロジェクト名 `McpSense`(2026-09-12。GitHub/NuGet で衝突なし確認済み — 蒸し返さないこと)。AI 機能はオプトイン。検証用の実 spec は GitHub REST API(`api.github.com.json`、約 1,240 オペレーション)を採用済み。
+- **未確定**: 現時点で仕様上の未確定事項は無い。Streamable HTTP の再導入(認証とセット)と個別ライブラリのパッケージ公開は、要望が出たときに再検討する(いずれも上記の該当節に判断根拠あり)。
