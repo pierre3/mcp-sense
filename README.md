@@ -92,9 +92,9 @@ updateLIFFApp   PUT    /liff/v1/apps/{liffId}
                 tags=liff  params=1  body=application/json  auth=Bearer
 ```
 
-### Serving a spec
+### Using it as an MCP server
 
-`mcpsense mcp` speaks MCP over stdio, which is what Claude Desktop and Claude Code expect:
+`mcpsense mcp` speaks the MCP protocol over stdio, which is what Claude Desktop and Claude Code expect:
 
 ```bash
 mcpsense mcp ./openapi.yaml --bearer-token "$API_TOKEN"
@@ -218,6 +218,16 @@ CallTool -> look up the invocation plan -> build an HttpRequestMessage
 Credentials are supplied once at startup and attached server-side. They are never placed in a tool
 schema and never reach the model.
 
+### Building the catalog
+
+The catalog is built once, at startup. Two details of that are worth calling out. Local `$ref`s are
+inlined into each tool's schema — including in specs whose schemas refer to themselves — because an
+MCP client never sees the OpenAPI document and so could not resolve a reference left in a schema. And
+validation is deliberately lenient: real-world specs routinely fail strict OpenAPI validation while
+remaining perfectly usable, and even a vendor's own spec does, so a proxy stricter than the vendor
+would be little use. McpSense fails only when no document can be produced at all, and reports any
+other findings as non-fatal problems.
+
 ### Consent is obtained before the server starts
 
 An API that needs OAuth is authorized with a separate `mcpsense login` step:
@@ -243,42 +253,30 @@ public client with no secret worth the name; without the proof key, an authoriza
 on the loopback interface could be redeemed by anything else on that machine. Stored tokens are
 encrypted with DPAPI on Windows and written owner-only elsewhere.
 
-### AI never becomes a dependency
+### AI-assisted features
 
-The AI stages are opt-in, and nothing about them is allowed to become load-bearing. If the model
-errors, times out, or returns something that will not parse, the affected operations keep the
-spec's own wording and startup continues — an outage at a model provider must not stop a server
-whose whole point is that it works without one.
+McpSense runs with no model configured. Naming one improves two things, and each keeps working
+exactly as before if you name nothing.
 
-Rewrites are batched (ten operations per request by default) so a thousand-operation spec costs
-about a hundred requests rather than a thousand, and cached on disk so the second start costs
-nothing. Caching a response in memory would not help here: a CLI process exits between runs, so
-every start would pay again.
+**A chat model (`--ai-model`) rewrites the text a model reads.** Without it, a tool's name, its
+description and each URL parameter's description come straight from the spec — the `operationId`, the
+summary or description, and the parameter text as the vendor wrote them. With it, the model turns the
+name into a short verb-first `snake_case`, condenses the description to a sentence or two about what
+the operation does and when to use it, and restates each URL (path, query and header) parameter.
+Request-body fields are left as the spec has them.
 
-### Search works without AI
+**An embedding model (`--ai-embedding-model`) changes how search matches.** Without it, search matches
+on words: it breaks `listPets` into "list" and "pets", compares those against each operation's name,
+path, tags and description, and ranks rarer words and name matches highest — so you find an operation
+by asking in roughly the words the API already uses. With it, search matches on meaning through vector
+similarity, finding an operation even when your wording shares no words with it — "send someone a
+picture" reaching one the spec calls `pushImageMessage`.
 
-Meta-tool mode is triggered by how large a spec is, not by whether an AI model was configured. If
-search needed embeddings, every large spec would need AI — which would defeat the point of working
-fully without it. So the default index is lexical: it splits identifiers into words, weights rare
-terms above common ones, and ranks a match in an operation's name above one in its prose. That
-finds an operation when the caller uses roughly the API's own vocabulary.
-
-Configuring an `IEmbeddingGenerator` swaps in semantic search, which also finds operations whose
-wording differs from the query. Every operation is embedded once at startup, in a single batched
-call.
-
-### Schemas are self-contained
-
-An MCP client never sees the OpenAPI document, so a tool schema containing
-`{"$ref": "#/components/schemas/Pet"}` would be meaningless to it. Every local reference is inlined
-before a tool is advertised, including in specs whose schemas refer to themselves.
-
-### Specs are taken as they are
-
-Real-world specs routinely fail strict OpenAPI validation while remaining perfectly usable — even
-first-party specs published by API vendors do. A proxy that is stricter than the vendor is not much
-use, so McpSense fails only when no document can be produced at all. Validation findings are
-reported as non-fatal problems and the operations are served regardless.
+Both are opt-in and neither is load-bearing. Rewrites are batched (ten operations per request by
+default, about a hundred rather than a thousand for a thousand-operation spec) and cached on disk, so
+a second start over an unchanged spec sends nothing; embeddings are computed once at startup. If a
+model errors, times out or returns something unparseable, the affected operations keep the spec's own
+text and the server still starts.
 
 ## License
 
