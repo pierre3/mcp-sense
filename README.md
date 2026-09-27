@@ -1,6 +1,6 @@
 # McpSense
 
-[![NuGet](https://img.shields.io/nuget/vpre/McpSense.Tool.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/McpSense.Tool/)
+[![NuGet](https://img.shields.io/nuget/v/McpSense.Tool.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/McpSense.Tool/)
 [![NuGet downloads](https://img.shields.io/nuget/dt/McpSense.Tool.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/McpSense.Tool/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/pierre3/mcp-sense/blob/main/LICENSE)
 
@@ -13,9 +13,9 @@ committed: point it at a spec and it serves.
 
 *Read this in [日本語](README_ja.md).*
 
-> **Status: preview.** Everything described below runs today — specs far too large to expose one
-> tool per operation, AI-assisted descriptions, and OAuth with automatic token refresh. The command
-> line may still change between preview releases.
+> **Status: stable (1.0.0).** Everything described below runs today — specs far too large to expose
+> one tool per operation, AI-assisted descriptions, and OAuth with automatic token refresh. From this
+> release on, the command line follows Semantic Versioning.
 
 ## What it is built around
 
@@ -57,7 +57,7 @@ answers with nonsense, the spec's own text is kept and the server still starts.
 Install the `mcpsense` command from NuGet:
 
 ```bash
-dotnet tool install --global McpSense.Tool --prerelease
+dotnet tool install --global McpSense.Tool
 ```
 
 To work on McpSense itself, clone the repository, run `dotnet build McpSense.slnx`, and use

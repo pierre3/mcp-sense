@@ -3,9 +3,12 @@
 *This document in [English](CHANGELOG.md).*
 
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に従います。
-1.0.0 までは、プレビュー版の間で公開 API が変わることがあります。
 
-## [未リリース]
+## [1.0.0] - 2026-09-27
+
+最初の正式リリースです。コマンドラインは安定し、本バージョン以降はセマンティックバージョニングに
+従います。0.1.0-preview の内容はすべて含まれ、以降の変更は下記の修正のみです。いずれも GitHub の
+REST API を、未認証・personal access token・OAuth の各方式で通しで検証する中で見つかったものです。
 
 ### 修正
 
@@ -72,5 +75,5 @@
   他のパッケージは要りません。個別に公開すると、まだ誰も求めていない公開 API を約束することになります。
   後からパック対象に戻すのは容易ですが、公開したパッケージの取り下げはできません。
 
-[未リリース]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...HEAD
+[1.0.0]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...v1.0.0
 [0.1.0-preview]: https://github.com/pierre3/mcp-sense/releases/tag/v0.1.0-preview

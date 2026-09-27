@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 現状
 
-**M0 〜 M6 完了。2026-09-14 に `McpSense.Tool` 0.1.0-preview を nuget.org へ公開済み。** 機能もドキュメントもひととおり揃っている — spec 解析、meta-tool モード、AI 説明改善、OAuth(Authorization Code + PKCE・自動更新)、stdio トランスポート、`dotnet tool` 配布、`samples/`、CHANGELOG、リリースワークフロー。
+**M0 〜 M6 完了。2026-09-14 に 0.1.0-preview、2026-09-27 に `McpSense.Tool` 1.0.0(正式版)を nuget.org へ公開済み。** 機能もドキュメントもひととおり揃っている — spec 解析、meta-tool モード、AI 説明改善、OAuth(Authorization Code + PKCE・自動更新)、stdio トランスポート、`dotnet tool` 配布、`samples/`、CHANGELOG、リリースワークフロー。1.0.0 では GitHub REST API を未認証・PAT・OAuth の各方式で通しで検証し、preview を外した(コマンドラインは以降 SemVer に従う)。
 
 リリースはタグ `v*` の push で `release.yml` が発火し、NuGet Trusted Publishing(OIDC)で公開する。API キーは持たない。nuget.org 側のポリシーは登録済み(Owner: pierre3 / Repo: mcp-sense / Workflow: release.yml / Environment: nuget / Glob: McpSense.Tool)。**公開は外向きの不可逆操作なので、タグ push はユーザーが行う。**
 

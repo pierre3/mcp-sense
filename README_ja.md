@@ -1,6 +1,6 @@
 # McpSense
 
-[![NuGet](https://img.shields.io/nuget/vpre/McpSense.Tool.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/McpSense.Tool/)
+[![NuGet](https://img.shields.io/nuget/v/McpSense.Tool.svg?logo=nuget&label=NuGet)](https://www.nuget.org/packages/McpSense.Tool/)
 [![NuGet downloads](https://img.shields.io/nuget/dt/McpSense.Tool.svg?logo=nuget&label=downloads)](https://www.nuget.org/packages/McpSense.Tool/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/pierre3/mcp-sense/blob/main/LICENSE)
 
@@ -13,8 +13,8 @@ Claude Code などの MCP クライアントから、その API を直接呼び�
 
 *This document in [English](README.md).*
 
-> **プレビュー版です。** 大規模な spec への対応、AI による説明文の改善、トークン自動更新付きの OAuth まで
-> 一通り動作しますが、コマンドラインは今後変わる可能性があります。
+> **正式版(1.0.0)です。** 大規模な spec への対応、AI による説明文の改善、トークン自動更新付きの OAuth まで
+> 一通り動作します。本リリース以降、コマンドラインはセマンティックバージョニングに従います。
 
 ## 特徴
 
@@ -52,7 +52,7 @@ GitHub の REST API を例にすると、**1,229 オペレーション、ツー�
 `mcpsense` コマンドを NuGet からインストールします。
 
 ```bash
-dotnet tool install --global McpSense.Tool --prerelease
+dotnet tool install --global McpSense.Tool
 ```
 
 McpSense 自体を開発する場合は、リポジトリをクローンして `dotnet build McpSense.slnx` し、

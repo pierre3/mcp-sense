@@ -2,10 +2,14 @@
 
 *Read this in [日本語](CHANGELOG_ja.md).*
 
-This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Until 1.0.0 the
-public API may change between preview releases.
+This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-09-27
+
+First stable release. The command line is settled and follows Semantic Versioning from here on.
+Everything from 0.1.0-preview is included; the only changes since are the fixes below, found while
+verifying McpSense against GitHub's REST API end to end — anonymously, with a personal access token,
+and through OAuth.
 
 ### Fixed
 
@@ -77,5 +81,5 @@ covered by tests, but the command line is not stable yet.
   to a public API before anyone has asked for one, and while packing can be turned on later, a
   published package cannot be withdrawn.
 
-[Unreleased]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...HEAD
+[1.0.0]: https://github.com/pierre3/mcp-sense/compare/v0.1.0-preview...v1.0.0
 [0.1.0-preview]: https://github.com/pierre3/mcp-sense/releases/tag/v0.1.0-preview
